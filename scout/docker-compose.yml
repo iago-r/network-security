@@ -1,0 +1,8 @@
+version: "3.7"
+
+services:
+  scout:
+    image: rossja/ncc-scoutsuite:aws-latest
+    volumes:
+      - ./dev/aws-credentials:/root/.aws/credentials:ro
+      - ./data:/root/output:rw
