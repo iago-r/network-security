@@ -30,7 +30,7 @@ parser.add_argument(
 parser.add_argument(
     "-scout",
     "--scout_suite",
-    action='store_true',
+    action="store_true",
     help="SCOUT: Running the Scout module.",
 )
 
@@ -56,19 +56,11 @@ def test_scout(s):
         time.strftime("scout-%Y%m%d-%H%M%S"),
         f"scout aws --no-browser --result-format json \
         --report-dir {OUTDIR_CONTAINER_MOUNT} --logfile \
-        {OUTDIR_CONTAINER_MOUNT}/scout.log",    # Commands_scout
-        
-        volumes = {
-            './dev/aws-credentials': {
-                'bind': '/root/.aws/credentials',
-                'mode': 'ro'
-            },
-            './data': {
-                'bind': '/root/output',
-                'mode': 'rw'
-            }
-        } # volumes_scout
-
+        {OUTDIR_CONTAINER_MOUNT}/scout.log",  # Commands_scout
+        volumes={
+            "./dev/aws-credentials": {"bind": "/root/.aws/credentials", "mode": "ro"},
+            "./data": {"bind": "/root/output", "mode": "rw"},
+        },  # volumes_scout
     )
 
     logging.info("RUNNING TEST SCOUT")
@@ -83,12 +75,11 @@ def task_1(s, seconds: int):
         f"sleep {seconds}",  # commands
     )
 
-    taskcfg2 = scout.ScoutTask(
-        time.strftime("scout-%Y%m%d-%H%M%S"),
-        f"sleep 5"
-    )
+    taskcfg2 = scout.ScoutTask(time.strftime("scout-%Y%m%d-%H%M%S"), f"sleep 5")
 
-    logging.info("RUNNING TEST 1 - The container was removed after n seconds, along with another set of tasks.")
+    logging.info(
+        "RUNNING TEST 1 - The container was removed after n seconds, along with another set of tasks."
+    )
     s.enqueue(taskcfg)
     s.enqueue(taskcfg2)
     logging.info("Task submitted")
@@ -105,7 +96,7 @@ def task_2(s, seconds: int):
         "RUNNING TEST 2 - Container with infinite execution removed after n seconds."
     )
     s.enqueue(taskcfg)
-    
+
     time.sleep(seconds)
     logging.info("Task submitted")
     s.shutdown(False)
@@ -119,7 +110,7 @@ def task_3(s, seconds: int):
 
     logging.info("RUNNING TEST 3 - Container removed after returning an error.")
     s.enqueue(taskcfg)
-    
+
     logging.info("Task submitted")
     s.shutdown()
 
@@ -156,8 +147,8 @@ def main():
         seconds = args.test3
         task_3(s, seconds)
 
-    #python3 testrun.py -scout
-    if args.scout_suite:            
+    # python3 testrun.py -scout
+    if args.scout_suite:
         test_scout(s)
 
 

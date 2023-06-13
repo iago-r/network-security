@@ -22,9 +22,7 @@ SCOUT_TASK_LABEL_KEY = "scout-task-id"
 
 
 # https://docs.docker.com/engine/reference/commandline/ps/
-class ContainerState(
-    enum.Enum
-):
+class ContainerState(enum.Enum):
     CREATED = "created"
     RESTARTING = "restarting"
     RUNNING = "running"
@@ -54,8 +52,8 @@ class Task(Protocol):
 @dataclasses.dataclass(frozen=True)
 class ScoutTask:
     label: str
-    commands: str | None = None 
-    volumes: dict | None = None 
+    commands: str | None = None
+    volumes: dict | None = None
     aws_api_key: str | None = None
     aws_api_secret: str | None = None
     role_arn: str | None = None
@@ -73,7 +71,6 @@ class ScanModule(Protocol):
 
     def shutdown(self, wait: bool) -> None:
         ...
-
 
 
 class Scout(ScanModule):
