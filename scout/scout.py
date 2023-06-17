@@ -39,7 +39,7 @@ class ContainerState(enum.Enum):
 class ScoutConfig:
     credentials_file: pathlib.Path
     output_dir: pathlib.Path
-    docker_image: str
+    docker_image: str = "rossja/ncc-scoutsuite:aws-latest"
     docker_poll_interval: float = 16.0
     docker_socket: str | None = None
     docker_timeout: int = 5
@@ -164,7 +164,7 @@ class Scout(ScanModule):
                     json.dump(r, fd)
                 self.task_completion_callback(cfg.label, True)
                 logging.info(
-                    "Scout run completed, id %s sta+-tus %d",
+                    "Scout run completed, id %s status %d",
                     cfg.label,
                     r[DOCKER_STATUSCODE_KEY],
                 )

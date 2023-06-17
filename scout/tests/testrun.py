@@ -56,11 +56,11 @@ def test_scout(s):
         time.strftime("scout-%Y%m%d-%H%M%S"),
         f"scout aws --no-browser --result-format json \
         --report-dir {OUTDIR_CONTAINER_MOUNT} --logfile \
-        {OUTDIR_CONTAINER_MOUNT}/scout.log",  # Commands_scout
+        {OUTDIR_CONTAINER_MOUNT}/scout.log",
         volumes={
             "./dev/aws-credentials": {"bind": "/root/.aws/credentials", "mode": "ro"},
             "./data": {"bind": "/root/output", "mode": "rw"},
-        },  # volumes_scout
+        },
     )
 
     logging.info("RUNNING TEST SCOUT")
@@ -72,16 +72,27 @@ def test_scout(s):
 def task_1(s, seconds: int):
     taskcfg = scout.ScoutTask(
         time.strftime("scout-%Y%m%d-%H%M%S"),
-        f"sleep {seconds}",  # commands
+        f"sleep {seconds}",
     )
 
-    taskcfg2 = scout.ScoutTask(time.strftime("scout-%Y%m%d-%H%M%S"), f"sleep 5")
+    taskcfg2 = scout.ScoutTask(
+        time.strftime("scout-%Y%m%d-%H%M%S"),
+        f"sleep {seconds-2}",
+    )
+
+    taskcfg3 = scout.ScoutTask(
+        time.strftime("scout-%Y%m%d-%H%M%S"),
+        f"sleep {seconds-4}",
+    )
 
     logging.info(
         "RUNNING TEST 1 - The container was removed after n seconds, along with another set of tasks."
     )
     s.enqueue(taskcfg)
     s.enqueue(taskcfg2)
+    s.enqueue(taskcfg2)
+    s.enqueue(taskcfg3)
+    s.enqueue(taskcfg3)
     logging.info("Task submitted")
     s.shutdown()
 
@@ -89,7 +100,7 @@ def task_1(s, seconds: int):
 def task_2(s, seconds: int):
     taskcfg = scout.ScoutTask(
         time.strftime("scout-%Y%m%d-%H%M%S"),
-        "tail -f /dev/null",  # commands
+        "tail -f /dev/null",
     )
 
     logging.info(
@@ -105,7 +116,7 @@ def task_2(s, seconds: int):
 def task_3(s, seconds: int):
     taskcfg = scout.ScoutTask(
         time.strftime("scout-%Y%m%d-%H%M%S"),
-        f"sh -c 'sleep {seconds} && exit 1'",
+        f"sh -c 'sleep {seconds} && false'",
     )
 
     logging.info("RUNNING TEST 3 - Container removed after returning an error.")
@@ -132,22 +143,18 @@ def main():
     s = scout.Scout(cfg, callback)
     logging.info("Submitting task to Scout module")
 
-    # python3 testrun.py -t1 "tempo de execução em segundos"
     if args.test1:
         seconds = args.test1
         task_1(s, seconds)
 
-    # #python3 testrun.py -t2 "tempo de execução em segundos"
     if args.test2:
         seconds = args.test2
         task_2(s, seconds)
 
-    # python3 testrun.py -t3 "tempo de execução em segundos"
     if args.test3:
         seconds = args.test3
         task_3(s, seconds)
 
-    # python3 testrun.py -scout
     if args.scout_suite:
         test_scout(s)
 
