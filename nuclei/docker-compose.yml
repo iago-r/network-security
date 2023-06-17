@@ -1,0 +1,8 @@
+version: "3.7"
+
+services:
+  nuclei:
+    image: projectdiscovery/nuclei:latest
+    volumes:
+      - ./output:/root/output:rw
+      - ./templates:/root/nuclei-templates:rw
