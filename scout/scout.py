@@ -52,8 +52,7 @@ class Task(Protocol):
 @dataclasses.dataclass(frozen=True)
 class ScoutTask:
     label: str
-    commands: str | None = None
-    volumes: dict | None = None
+    command: tuple[str] | None = None
     aws_api_key: str | None = None
     aws_api_secret: str | None = None
     role_arn: str | None = None
@@ -94,18 +93,37 @@ class Scout(ScanModule):
 
     def enqueue(self, taskcfg: Task) -> None:
         assert isinstance(taskcfg, ScoutTask)
-
         outfp = self.config.output_dir / taskcfg.label
         os.makedirs(outfp, exist_ok=True)
         try:
+            command = taskcfg.command if taskcfg.command is not None else (
+                "scout",
+                "aws",
+                "--no-browser",
+                "--result-format",
+                "json",
+                "--report-dir",
+                f"{OUTDIR_CONTAINER_MOUNT}",
+                "--logfile",
+                f"{OUTDIR_CONTAINER_MOUNT}/scout.log",
+            )
             ctx = self.docker.containers.run(
                 self.config.docker_image,
-                command=taskcfg.commands,
+                command=command,
                 detach=True,
                 labels={SCOUT_TASK_LABEL_KEY: taskcfg.label},
                 stdout=True,
                 stderr=True,
-                volumes=taskcfg.volumes,
+                volumes={
+                    str(self.config.credentials_file): {
+                        "bind": "/root/.aws/credentials",
+                        "mode": "ro",
+                    },
+                    str(outfp): {
+                        "bind": OUTDIR_CONTAINER_MOUNT,
+                        "mode": "rw",
+                    },
+                },
                 working_dir="/root",
             )
         except docker.errors.APIError as e:
@@ -118,16 +136,15 @@ class Scout(ScanModule):
     def shutdown(self, wait: bool = True) -> None:
         logging.info("Scout shutting down (wait=%s)", wait)
         self.running = False
+        self.handle_finished_containers()
         if not wait:
             with self.lock:
                 for ctx, cfg in self.containers:
                     logging.warning("Force-closing container for task %s", cfg.label)
                     ctx.remove(force=True)
-            self.containers.clear()
-        else:
-            self.handle_finished_containers()
-            self.thread.join()
-
+                self.containers.clear()
+        logging.info("Joining Scout polling thread")
+        self.thread.join()
         logging.info("Joined Scout polling thread, module shut down")
 
     def scout_polling_thread(self) -> None:
@@ -140,17 +157,10 @@ class Scout(ScanModule):
         completed = set()
         with self.lock:
             for ctx, cfg in self.containers:
-                try:
-                    ctx.reload()
-                except docker.errors.NotFound:
-                    logging.warning("Container not found: %s", cfg.label)
-                    continue
-
+                ctx.reload()
                 if not ContainerState(ctx.status).is_done():
                     continue
-
                 assert cfg.label == ctx.labels[SCOUT_TASK_LABEL_KEY]
-
                 r = ctx.wait(timeout=self.config.docker_timeout)
                 r["stdout"] = ctx.logs(
                     stdout=True, stderr=False, timestamps=True
@@ -158,7 +168,6 @@ class Scout(ScanModule):
                 r["stderr"] = ctx.logs(
                     stdout=False, stderr=True, timestamps=True
                 ).decode("utf8")
-
                 outfp = self.config.output_dir / cfg.label
                 with gzip.open(outfp / "result.json.gz", "wt", encoding="utf8") as fd:
                     json.dump(r, fd)
@@ -169,14 +178,11 @@ class Scout(ScanModule):
                     r[DOCKER_STATUSCODE_KEY],
                 )
                 completed.add((ctx, cfg))
-
             self.containers -= completed
-
             logging.info(
                 "Running %d ScoutSuite containers, waiting %d seconds to refresh",
                 len(self.containers),
                 self.config.docker_poll_interval,
             )
-
         for ctx, _cfg in completed:
             ctx.remove()
