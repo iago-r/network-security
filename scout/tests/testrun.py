@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import argparse
 import logging
 import os
 import pathlib
@@ -8,155 +9,148 @@ import time
 
 import scout
 
-import argparse
 
-parser = argparse.ArgumentParser()
-parser.add_argument(
-    "-t1", "--test1", type=int, help="Test 1: Container removed after n seconds."
-)
-parser.add_argument(
-    "-t2",
-    "--test2",
-    type=int,
-    help="Test 2: Container with infinite execution removed after n seconds.",
-)
-parser.add_argument(
-    "-t3",
-    "--test3",
-    type=int,
-    help="Test 3: Container removed after returning an error.",
-)
-
-parser.add_argument(
-    "-scout",
-    "--scout_suite",
-    action="store_true",
-    help="SCOUT: Running the Scout module.",
-)
-
-args = parser.parse_args()
+ALPINE_IMAGE = "alpine"
+NUM_CONTAINERS = 5
+BASE_SLEEP_DURATION = 8
+SLEEP_INCREMENT = 3
 
 
-CWD = pathlib.Path(os.getcwd())
-assert pathlib.Path(CWD / __file__).exists(), "Run from inside tests/ with ./testrun.py"
-SCOUT_MOD_PATH = CWD.parent
-
-
-DOCKER_STATUSCODE_KEY = "StatusCode"
-OUTDIR_CONTAINER_MOUNT = "/root/output"
-SCOUT_TASK_LABEL_KEY = "scout-task-id"
+def create_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--cred-file",
+        dest="cred_file",
+        metavar="FILE",
+        type=pathlib.Path,
+        help="Path to AWS credentials file [%(default)s]",
+        default=pathlib.Path("~/.aws/credentials").expanduser(),
+        required=False,
+    )
+    parser.add_argument(
+        "-t", "--test",
+        action="append",
+        dest="tests",
+        type=int,
+        choices=[1, 2, 3],
+        help="The tests to run, can be used multiple times %(default)s",
+        default=[],
+        required=False,
+    )
+    parser.add_argument(
+        "--run-scout",
+        action="store_true",
+        help="Run Scout on AWS account in addition to tests [%(default)s]",
+        default=False,
+        required=False,
+    )
+    parser.add_argument(
+        "--outdir",
+        dest="outdir",
+        metavar="DIR",
+        type=pathlib.Path,
+        help="Where to store test output",
+        default=pathlib.Path("./test-output").absolute(),
+        required=False,
+    )
+    return parser
 
 
 def callback(label: str, success: bool) -> None:
     logging.info("Callback for %s running, success=%s", label, success)
 
 
-def test_scout(s):
-    taskcfg = scout.ScoutTask(
-        time.strftime("scout-%Y%m%d-%H%M%S"),
-        f"scout aws --no-browser --result-format json \
-        --report-dir {OUTDIR_CONTAINER_MOUNT} --logfile \
-        {OUTDIR_CONTAINER_MOUNT}/scout.log",
-        volumes={
-            "./dev/aws-credentials": {"bind": "/root/.aws/credentials", "mode": "ro"},
-            "./data": {"bind": "/root/output", "mode": "rw"},
-        },
-    )
+def run_scout(cfg: scout.ScoutConfig):
+    logging.info("Starting Scout module")
+    sm = scout.Scout(cfg, callback)
 
-    logging.info("RUNNING TEST SCOUT")
-    s.enqueue(taskcfg)
-    logging.info("Task submitted")
-    s.shutdown()
+    taskcfg = scout.ScoutTask("scout-run")
+    logging.info("Running Scout")
+    sm.enqueue(taskcfg)
+    logging.info("Waiting for Scout to terminate")
+    sm.shutdown(wait=True)
 
 
-def task_1(s, seconds: int):
-    taskcfg = scout.ScoutTask(
-        time.strftime("scout-%Y%m%d-%H%M%S"),
-        f"sleep {seconds}",
-    )
+def run_test_1(cfg: scout.ScoutConfig) -> None:
+    logging.info("Starting Scout module")
+    sm = scout.Scout(cfg, callback)
 
-    taskcfg2 = scout.ScoutTask(
-        time.strftime("scout-%Y%m%d-%H%M%S"),
-        f"sleep {seconds-2}",
-    )
+    logging.info("Running test 1")
+    logging.info("Will start %d containers", NUM_CONTAINERS)
+    for i in range(1, NUM_CONTAINERS+1):
+        taskcfg = scout.ScoutTask(
+            f"test-1-{i}",
+            ("sleep", f"{BASE_SLEEP_DURATION + SLEEP_INCREMENT*i}"),
+        )
+        sm.enqueue(taskcfg)
 
-    taskcfg3 = scout.ScoutTask(
-        time.strftime("scout-%Y%m%d-%H%M%S"),
-        f"sleep {seconds-4}",
-    )
-
-    logging.info(
-        "RUNNING TEST 1 - The container was removed after n seconds, along with another set of tasks."
-    )
-    s.enqueue(taskcfg)
-    s.enqueue(taskcfg2)
-    s.enqueue(taskcfg2)
-    s.enqueue(taskcfg3)
-    s.enqueue(taskcfg3)
-    logging.info("Task submitted")
-    s.shutdown()
+    logging.info("Waiting for all containers to terminate cleanly")
+    sm.shutdown(wait=True)
+    logging.info("Test 1 completed")
 
 
-def task_2(s, seconds: int):
-    taskcfg = scout.ScoutTask(
-        time.strftime("scout-%Y%m%d-%H%M%S"),
-        "tail -f /dev/null",
-    )
+def run_test_2(cfg: scout.ScoutConfig):
+    logging.info("Starting Scout module")
+    sm = scout.Scout(cfg, callback)
 
-    logging.info(
-        "RUNNING TEST 2 - Container with infinite execution removed after n seconds."
-    )
-    s.enqueue(taskcfg)
+    logging.info("Running test 2")
+    logging.info("Will start %d containers", NUM_CONTAINERS)
+    for i in range(1, NUM_CONTAINERS+1):
+        taskcfg = scout.ScoutTask(
+            f"test-2-{i}",
+            ("sleep", f"{BASE_SLEEP_DURATION + SLEEP_INCREMENT*i}"),
+        )
+        sm.enqueue(taskcfg)
 
-    time.sleep(seconds)
-    logging.info("Task submitted")
-    s.shutdown(False)
-
-
-def task_3(s, seconds: int):
-    taskcfg = scout.ScoutTask(
-        time.strftime("scout-%Y%m%d-%H%M%S"),
-        f"sh -c 'sleep {seconds} && false'",
-    )
-
-    logging.info("RUNNING TEST 3 - Container removed after returning an error.")
-    s.enqueue(taskcfg)
-
-    logging.info("Task submitted")
-    s.shutdown()
+    logging.info("Sleeping %d seconds", BASE_SLEEP_DURATION)
+    time.sleep(BASE_SLEEP_DURATION)
+    logging.info("Force-quitting remaining containers")
+    sm.shutdown(wait=False)
+    logging.info("Test 2 completed")
 
 
-scout_image = "rossja/ncc-scoutsuite:aws-latest"
-generic_image = "alpine"
+def run_test_3(cfg: scout.ScoutConfig) -> None:
+    logging.info("Starting Scout module")
+    sm = scout.Scout(cfg, callback)
+
+    logging.info("Running test 3")
+    logging.info("Will start %d containers", NUM_CONTAINERS)
+    for i in range(1, NUM_CONTAINERS+1):
+        taskcfg = scout.ScoutTask(
+            f"test-3-{i}",
+            ("sh", "-c", f"sleep {BASE_SLEEP_DURATION + SLEEP_INCREMENT*i} && false"),
+        )
+        sm.enqueue(taskcfg)
+
+    logging.info("Waiting for all containers to fail")
+    sm.shutdown(wait=True)
+    logging.info("Test 3 completed")
+
+
+TEST_FUNCTIONS = [run_test_1, run_test_2, run_test_3]
 
 
 def main():
-    logging.basicConfig(level=logging.INFO)
-    logging.info("Starting Scout module")
+    parser = create_parser()
+    args = parser.parse_args()
+
+    logging.basicConfig(level=logging.DEBUG)
+
     cfg = scout.ScoutConfig(
-        pathlib.Path(SCOUT_MOD_PATH / "dev/aws-credentials"),
-        pathlib.Path(SCOUT_MOD_PATH / "data"),
-        docker_image=scout_image,
+        args.cred_file,
+        args.outdir,
+        docker_image=ALPINE_IMAGE,
         docker_poll_interval=1.0,
     )
-    logging.info("Scout module started")
-    s = scout.Scout(cfg, callback)
-    logging.info("Submitting task to Scout module")
 
-    if args.test1:
-        seconds = args.test1
-        task_1(s, seconds)
+    logging.info("Running tests")
+    for test in args.tests:
+        TEST_FUNCTIONS[ test - 1 ](cfg)
 
-    if args.test2:
-        seconds = args.test2
-        task_2(s, seconds)
+    if args.run_scout:
+        run_scout(cfg)
 
-    if args.test3:
-        seconds = args.test3
-        task_3(s, seconds)
-
-    if args.scout_suite:
-        test_scout(s)
+    logging.info("Done")
 
 
 if __name__ == "__main__":
