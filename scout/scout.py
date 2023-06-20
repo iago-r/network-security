@@ -22,7 +22,7 @@ SCOUT_TASK_LABEL_KEY = "scout-task-id"
 
 
 # https://docs.docker.com/engine/reference/commandline/ps/
-class ContainerState(enum.StrEnum):
+class ContainerState(enum.Enum):
     CREATED = "created"
     RESTARTING = "restarting"
     RUNNING = "running"
@@ -52,6 +52,7 @@ class Task(Protocol):
 @dataclasses.dataclass(frozen=True)
 class ScoutTask:
     label: str
+    command: tuple[str] | None = None
     aws_api_key: str | None = None
     aws_api_secret: str | None = None
     role_arn: str | None = None
@@ -63,8 +64,10 @@ TaskCompletionCallback = Callable[[str, bool], None]
 class ScanModule(Protocol):
     def __init__(self, config: Any, callback: TaskCompletionCallback) -> None:
         ...
+
     def enqueue(self, taskcfg: Task) -> None:
         ...
+
     def shutdown(self, wait: bool) -> None:
         ...
 
@@ -93,19 +96,20 @@ class Scout(ScanModule):
         outfp = self.config.output_dir / taskcfg.label
         os.makedirs(outfp, exist_ok=True)
         try:
+            command = taskcfg.command if taskcfg.command is not None else (
+                "scout",
+                "aws",
+                "--no-browser",
+                "--result-format",
+                "json",
+                "--report-dir",
+                f"{OUTDIR_CONTAINER_MOUNT}",
+                "--logfile",
+                f"{OUTDIR_CONTAINER_MOUNT}/scout.log",
+            )
             ctx = self.docker.containers.run(
                 self.config.docker_image,
-                command=[
-                    "scout",
-                    "aws",
-                    "--no-browser",
-                    "--result-format",
-                    "json",
-                    "--report-dir",
-                    f"{OUTDIR_CONTAINER_MOUNT}",
-                    "--logfile",
-                    f"{OUTDIR_CONTAINER_MOUNT}/scout.log",
-                ],
+                command=command,
                 detach=True,
                 labels={SCOUT_TASK_LABEL_KEY: taskcfg.label},
                 stdout=True,
@@ -138,6 +142,7 @@ class Scout(ScanModule):
                 for ctx, cfg in self.containers:
                     logging.warning("Force-closing container for task %s", cfg.label)
                     ctx.remove(force=True)
+                self.containers.clear()
         logging.info("Joining Scout polling thread")
         self.thread.join()
         logging.info("Joined Scout polling thread, module shut down")
