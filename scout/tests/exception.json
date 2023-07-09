@@ -1,0 +1,5 @@
+{
+  "request-id": "<unique-id>",
+  "secret-arn": "[secret-ARN]",
+  "role-arn": "[role-ARN]"
+}
