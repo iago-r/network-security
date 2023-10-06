@@ -9,6 +9,8 @@ import time
 
 import scout
 
+import json
+
 
 ALPINE_IMAGE = "alpine"
 NUM_CONTAINERS = 5
@@ -59,12 +61,22 @@ def create_parser():
 def callback(label: str, success: bool) -> None:
     logging.info("Callback for %s running, success=%s", label, success)
 
+def get_rolearn(label: str) -> str:
+    with open("exception.json", "r",encoding="utf8") as file:
+        data = json.load(file)    
+    return data[label]
+
 
 def run_scout(cfg: scout.ScoutConfig):
+
+    data_rolearn = get_rolearn('role-arn')
+
     logging.info("Starting Scout module")
     sm = scout.Scout(cfg, callback)
 
-    taskcfg = scout.ScoutTask("scout-run")
+    taskcfg = scout.ScoutTask("scout-run",  
+        role_arn= data_rolearn       
+    )
     logging.info("Running Scout")
     sm.enqueue(taskcfg)
     logging.info("Waiting for Scout to terminate")
@@ -139,7 +151,7 @@ def main():
     cfg = scout.ScoutConfig(
         args.cred_file,
         args.outdir,
-        docker_image=ALPINE_IMAGE,
+        dockertaskcfg_image=ALPINE_IMAGE,
         docker_poll_interval=1.0,
     )
 

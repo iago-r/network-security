@@ -106,6 +106,8 @@ class Scout(ScanModule):
                 f"{OUTDIR_CONTAINER_MOUNT}",
                 "--logfile",
                 f"{OUTDIR_CONTAINER_MOUNT}/scout.log",
+                "--exceptions",
+                taskcfg.role_arn
             )
             ctx = self.docker.containers.run(
                 self.config.docker_image,
