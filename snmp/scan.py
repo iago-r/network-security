@@ -3,6 +3,7 @@ import queue
 import time
 import snmpwalk
 import translate
+import os
 
 # variables 
 FILE_IP = "IPS.txt"
@@ -11,6 +12,9 @@ OID = "1.3.6.1"
 
 # Time
 start = time.time()
+
+# create directory if it doesn't exist
+os.makedirs("scan")
 
 # Function that will be called to start the threads
 def start_threads(q):
