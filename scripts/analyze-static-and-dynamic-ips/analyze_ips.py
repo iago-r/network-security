@@ -19,14 +19,12 @@ class ShodanData(BaseModel):
     expected: list[dict[str, Any]]
 
 
-# Expected data from module names parameter
-class ModuleNamesData(BaseModel):
-    expected: list[str]
-
-
-# Expected function signature for fingerprint extractor
-class FingerprintExtractorData(BaseModel):
-    expected: Optional[Callable[[str], str]]
+# Expected ModuleData class
+class ModuleDataModel(BaseModel):
+    alias: str
+    moduleNames: list[str]
+    fieldPath: str
+    extractorFn: Optional[Callable[[str], str]]
 
 
 # IP address time series used for Rule 3
@@ -53,25 +51,21 @@ class ModuleData:
         extractorFn: Optional[Callable[[str], str]] = None,
     ):
         # Check
-        if type(alias) is not str or type(fieldPath) is not str:
-            logging.error(
-                "Unable to initialize ModuleData. Parameter 'alias' and/or 'field' doesn't match the expected structure: str. Aborted"
-            )
-            exit(1)
-
         try:
-            ModuleNamesData(expected=moduleNames)
-        except ValidationError:
-            logging.error(
-                "Unable to initialize ModuleData. Parameter 'moduleNames' doesn't match the expected structure: list[str]. Aborted"
+            ModuleDataModel(
+                alias=alias,
+                moduleNames=moduleNames,
+                fieldPath=fieldPath,
+                extractorFn=extractorFn,
             )
-            exit(1)
+        except ValidationError as ve:
+            errors: str = ""
 
-        try:
-            FingerprintExtractorData(expected=extractorFn)
-        except ValidationError:
+            for e in ve.errors():
+                errors += f"'{e['loc'][0]}', found {e['input']}, expected {e['type']}\n"
+
             logging.error(
-                "Unable to initialize ModuleData. Parameter 'extractorFn' doesn't match the expected structure: Callable[[str], str]. Aborted"
+                f"Unable to initialize ModuleData. The following parameters don't match the expected structure:\n{''.join(errors)} Aborted"
             )
             exit(1)
 
@@ -151,7 +145,7 @@ def getNestedFieldData(scan: dict[str, Any], modData: ModuleData) -> str | None:
         data = data.get(key)
 
         if data == None:
-            break
+            return None
 
     if modData.fingerprintExtractor:
         return modData.fingerprintExtractor(data)
