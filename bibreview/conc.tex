@@ -1,0 +1,27 @@
+% LTeX: language=pt-BR
+
+\section{Considerações Finais}
+
+Neste relatório apresentamos uma revisão bibliográfica sobre gerenciamento de vulnerabilidades de software.  Trabalhos anteriores já propuseram soluções para priorização de vulnerabilidades, por exemplo, identificando quais vulnerabilidades têm maior probabilidade de serem exploradas. A partir da revisão realizada, identificamos oportunidades para aprimorar técnicas existentes de classificação de vulnerabilidades considerando metadados sobre a instituição monitorada, como: área de atuação, os sistemas que opera, os dados que armazena, o perfil e expectativa dos clientes, bem como a experiência e formação dos funcionários (desenvolvedores, operadores e analistas de segurança). Pretendemos também utilizar metadados sobre as vulnerabilidades e os sistemas monitorados obtidos de bases públicas. Avaliaremos e aprimoraremos os algoritmos de priorização desenvolvidos no projeto em cenários realistas através da colaboração com a startup parceira, utilizando dados reais e validando os resultados com os times das instituições auditadas.
+
+A priorização de vulnerabilidades tem aplicação direta em diversos contextos. Em particular, a priorização de vulnerabilidades é uma fonte adicional de informação para operadores, com potencial de reduzir custos operacionais e permitir realocação estratégica de recursos humanos.  Argumentamos que estes são objetivos concretos e práticos, que podem impulsionar a ideação de novos produtos, práticas, métodos, processos ou serviços na área de segurança.
+
+\subsection{Implicações e Recomendações Estratégicas}
+
+Considerando os desafios e oportunidades discutidos, apresentamos as seguintes recomendações para o desenvolvimento de soluções para priorização de vulnerabilidades.
+
+\begin{description}
+
+    \item[Agregação de dados e combinação ferramentas.]  Projetos devem combinar diversas fontes de dados públicas sobre vulnerabilidades disponíveis, como as bases do CVE, CWE, CPE, CVSS, EPSS, Exploit DB, Metasploit, e Canvas Exploitation Framework.  Estas bases de dados podem ser complementadas com dados de rede.  No contexto de auditoria de uma instituição ou empresa, melhor cobertura e informações complementares podem ser obtidas através da combinação de diversas ferramentas de código aberto, como OWASP ZAP, OpenVAS, Wapiti, Nuclei, Akto, Nmap e SQLmap, bem como serviços de monitoramento como Shodan e Censys.
+
+    \item[Curadoria de dados.] A agregação de bases de dados adicionais e utilização de mais ferramentas provê mais oportunidades para extração de informação útil.  Porém, extrair informações úteis requer padronização, normalização e verificação dos dados bem como identificação de relacionamentos entre as bases.  Sugerimos o desenvolvimento de técnicas robustas para encontrar equivalências e desambiguar vulnerabilidades encontradas por diferentes ferramentas, potencialmente utilizando modelos de inteligência artificial que possuem eficácia superior para os dados ruidosos sobre vulnerabilidades.
+
+    \item[Transferência de aprendizado.]  Uma abordagem já utilizada em alguns trabalhos que consideramos promissora para este projeto é o treino de modelos em dados públicos de grande escala, como a Wikipedia ou Projeto Gutemberg.  Os modelos treinados nestes conjuntos podem ser refinados posteriormente para uso em contextos de segurança utilizando técnicas de transferência de aprendizado~\cite{yin2020apply}.  Com isso podemos contornar o problema do desbalanceamento e escassez de dados em bases de dados sobre vulnerabilidades como relatórios gerados por ferramentas de varredura como OWASP e OpenVAS.
+
+    \item[Integração do contexto de entidades e analistas.] As vulnerabilidades que mais requerem esforços de analistas nem sempre são as vulnerabilidades com maior severidade ou classificadas como mais importantes em bases públicas como o CVSS e ranques ``top 10''~\cite{le21qa}.  Soluções de segurança devem integrar conhecimento específico do contexto de uma entidade e seus analistas.  Por exemplo, soluções devem considerar a formação e experiência de analistas e sua proficiência em lidar com diferentes tipos de vulnerabilidades, bem como a relevância de uma vulnerabilidade no contexto de uma entidade.  Acreditamos que com estas informações é possível adequar melhor a priorização de vulnerabilidades para cada entidade e equipe.
+
+    \item[Avaliação em cenários realistas.]  A avaliação de soluções de segurança é essencial para quantificar sua eficácia.  Porém, avaliar soluções de segurança em cenários realistas é desafiador.  A maioria dos estudos revisados avaliaram soluções desconsiderando diversos fatores relevantes para a implantação das soluções propostas em ambientes de produção.  Para trabalhos futuros, esforços devem ser colocados na avaliação realista, preferencialmente de sistemas em operação, com vulnerabilidades reais, e acessíveis por possíveis adversários.
+    
+\end{description}
+
+
