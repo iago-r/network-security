@@ -1,0 +1,113 @@
+// Define a lista de membros da equipe com suas propriedades
+const teamMembers = [
+    {
+        name: "John Doe",
+        role: "Worker",
+        imageSrc: "images/img-1.png",
+        socialLinks: {
+            facebook: "#",
+            twitter: "#",
+            linkedin: "#",
+            instagram: "#",
+        },
+    },
+    {
+        name: "Sandy Doe",
+        role: "Worker",
+        imageSrc: "images/img-2.png",
+        socialLinks: {
+            facebook: "#",
+            twitter: "#",
+            linkedin: "#",
+            instagram: "#",
+        },
+    },
+    {
+        name: "Alexi Doe",
+        role: "Worker",
+        imageSrc: "images/img-4.png",
+        socialLinks: {
+            facebook: "#",
+            twitter: "#",
+            linkedin: "#",
+            instagram: "#",
+        },
+    },
+    {
+        name: "John Doe",
+        role: "Worker",
+        imageSrc: "images/img-3.png",
+        socialLinks: {
+            facebook: "#",
+            twitter: "#",
+            linkedin: "#",
+            instagram: "#",
+        },
+    },
+];
+
+// Função para criar o elemento do membro da equipe
+function createTeamMemberElement(member) {
+    const container = document.createElement("div");
+    container.className = "col-lg-3 col-sm-6";
+
+    const blogImg = document.createElement("div");
+    blogImg.className = "blog_img";
+    const img = document.createElement("img");
+    img.src = member.imageSrc;
+    blogImg.appendChild(img);
+
+    const name = document.createElement("h3");
+    name.className = "jonmork_text";
+    name.textContent = member.name;
+
+    const role = document.createElement("p");
+    role.className = "worker_text";
+    role.textContent = member.role;
+
+    const followText = document.createElement("p");
+    followText.className = "follow_text";
+    followText.textContent = "Follow Us";
+
+    const socialIcon = document.createElement("div");
+    socialIcon.className = "social_icon";
+    const ul = document.createElement("ul");
+
+    // Cria os ícones de redes sociais
+    for (const key in member.socialLinks) {
+        const li = document.createElement("li");
+        const a = document.createElement("a");
+        const i = document.createElement("i");
+
+        a.href = member.socialLinks[key];
+        i.className = `fa fa-${key}`;
+        i.setAttribute("aria-hidden", "true");
+
+        a.appendChild(i);
+        li.appendChild(a);
+        ul.appendChild(li);
+    }
+
+    socialIcon.appendChild(ul);
+
+    container.appendChild(blogImg);
+    container.appendChild(name);
+    container.appendChild(role);
+    container.appendChild(followText);
+    container.appendChild(socialIcon);
+
+    return container;
+}
+
+// Função para adicionar os membros da equipe ao DOM
+function addTeamToPage() {
+    const blogSection = document.querySelector(".blog_section_2 .row");
+
+    teamMembers.forEach((member) => {
+        const teamElement = createTeamMemberElement(member);
+        blogSection.appendChild(teamElement);
+    });
+}
+
+// Adiciona a equipe ao carregar a página
+document.addEventListener("DOMContentLoaded", addTeamToPage);
