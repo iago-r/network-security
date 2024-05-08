@@ -14,8 +14,7 @@ const teamMembers = [
         role: "Graduando/Desenvolvedor",
         imageSrc: "images/pains.jpg",
         socialLinks: {
-            github: "#",
-            linkedin: "#",
+            github: "https://github.com/probablygab",
         },
     },
     {
@@ -23,9 +22,15 @@ const teamMembers = [
         role: "Graduando/Desenvolvedor",
         imageSrc: "images/lucas.jpg",
         socialLinks: {
-            github: "#",
-            linkedin: "#",
-            lattes: "#"
+            github: "https://github.com/Sacramento-20",
+        },
+    },
+    {
+        name: "Pedro",
+        role: "Graduando/Desenvolvedor",
+        imageSrc: "images/pedro.jpg",
+        socialLinks: {
+            github: "https://github.com/Pephma",
         },
     },
     {
@@ -35,7 +40,7 @@ const teamMembers = [
         socialLinks: {
             github: "https://github.com/cunha",
             linkedin: "https://www.linkedin.com/in/italocunha/",
-            lattes: "#"
+            user: "http://lattes.cnpq.br/7973706384467274"
         },
     },
 ];
