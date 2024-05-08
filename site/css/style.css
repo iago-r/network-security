@@ -501,7 +501,8 @@ button {
 .about_section {
     width: 100%;
     float: left;
-    background-image: url(../images/about-bg.png);
+    /* background-image: url(../images/about-bg.png); */
+    background-color: rgba(240, 240, 240, 1);
     height: auto;
     background-size: 100% 100%;
     padding: 90px 0px;
