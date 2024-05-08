@@ -222,7 +222,7 @@ button {
 .header_section {
     width: 100%;
     float: left;
-    background-color: #0000ff;
+    background-color: #cceeff;
     height: auto;
     padding: 10px 0px;
 }
@@ -232,7 +232,7 @@ button {
 }
 
 .navbar-light .navbar-nav .nav-link {
-    color: #fff;
+    color: #000000;
     padding: 10px 20px;
     margin: 0px 5px;
     font-size: 18px;
@@ -241,16 +241,16 @@ button {
 
 .navbar-light .navbar-nav .nav-link:focus,
 .navbar-light .navbar-nav .nav-link:hover {
-    color: #fff;
-    background-color: #fbbb4b;
+    color: #000000;
+    background-color: #2222ff;
 }
 
 .navbar-light .navbar-nav .active>.nav-link,
 .navbar-light .navbar-nav .nav-link.active,
 .navbar-light .navbar-nav .nav-link.show,
 .navbar-light .navbar-nav .show>.nav-link {
-    color: #fff;
-    background-color: #fbbb4b;
+    color: #000000;
+    background-color: #aabbff;
 }
 
 .search_icon {
@@ -582,7 +582,7 @@ button {
     color: #1b1b1b;
     text-align: center;
     font-weight: bold;
-    text-transform: uppercase;
+    /* text-transform: uppercase; */
 }
 
 .team_text {
