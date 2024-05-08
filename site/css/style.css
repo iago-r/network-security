@@ -609,9 +609,10 @@ button {
 }
 
 .blog_img img {
-    width: 250px;
-    border-radius: 200px;
-    height: 250px;
+    width: 200px;
+    border-radius: 175px;
+    height: 200px;
+    margin-left: 80px;
 }
 
 .jonmork_text {
@@ -642,6 +643,7 @@ button {
     display: inline-block;
     text-align: center;
     margin-top: 10px;
+    margin-bottom: 20px;
 }
 
 .social_icon ul {

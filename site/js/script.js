@@ -48,7 +48,7 @@ const teamMembers = [
 // Função para criar o elemento do membro da equipe
 function createTeamMemberElement(member) {
     const container = document.createElement("div");
-    container.className = "col-lg-3 col-sm-6";
+    container.className = "col-lg-4 col-sm-6";
 
     const blogImg = document.createElement("div");
     blogImg.className = "blog_img";
