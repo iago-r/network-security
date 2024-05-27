@@ -192,7 +192,7 @@
 
   Checar regras de firewall
 
-  UUtiliza técnica [firewalking](https://ieeexplore.ieee.org/abstract/document/5752565)
+  UUtiliza técnica firewalking. [Artigo](https://ieeexplore.ieee.org/abstract/document/5752565)
 
   Integrado com nmap (-1 é pra verificar todas as portas): ```sudo nmap --script=firewalk --traceroute --script-args=firewalk.max-probed-ports=-1 <ip>```
 
@@ -210,9 +210,11 @@
 
   Oferece painel para visalizar, comentar e explorar vulnerabilidades encontradas
   
-   Permite integração com pipelines para automatizar processo, integraçao com Jira ... -> Importante olhar formatos de arquivos para importação de cada ferramenta [Integrações](https://defectdojo.com/integrations#categories)
+  Permite integração com pipelines para automatizar processo, integraçao com Jira ... -> Importante olhar formatos de arquivos para importação de cada ferramenta [Integrações](https://defectdojo.com/integrations#categories)
 
-   Possui API para fazer automatizaçoes -> [Documentação - defect dojo precisa estar rodando](http://localhost:8080/api/v2/oa3/swagger-ui/)
+  * [Pipeline](https://www.youtube.com/watch?v=DLN1kNh_Ha0)
+
+  Possui API para fazer automatizaçoes -> [Documentação - defect dojo precisa estar rodando](http://localhost:8080/api/v2/oa3/swagger-ui/)
 
 * Yara
 
