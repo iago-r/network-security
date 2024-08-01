@@ -5,17 +5,17 @@
 %% The original source files were:
 %%
 %% acmart.dtx  (with options: `class')
-%% 
+%%
 %% IMPORTANT NOTICE:
-%% 
+%%
 %% For the copyright see the source file.
-%% 
+%%
 %% Any modified versions of this file must be renamed
 %% with new filenames distinct from acmart.cls.
-%% 
+%%
 %% For distribution of the original source see the terms
 %% for copying and modification in the file acmart.dtx.
-%% 
+%%
 %% This generated file may be distributed as long as the
 %% original source files, as listed above, are part of the
 %% same distribution. (The sources need not necessarily be
@@ -697,84 +697,84 @@
     \fi
   \fi
 \fi
-\RequirePackage{geometry}
-\ifcase\ACM@format@nr
-\relax % manuscript
-   \geometry{letterpaper,head=13pt,
-   marginparwidth=6pc,heightrounded}%
-\or % acmsmall
-   \geometry{twoside=true,
-     includeheadfoot, head=13pt, foot=2pc,
-     paperwidth=6.75in, paperheight=10in,
-     top=58pt, bottom=44pt, inner=46pt, outer=46pt,
-     marginparwidth=2pc,heightrounded
-   }%
-\or % acmlarge
-   \geometry{twoside=true, head=13pt, foot=2pc,
-     paperwidth=8.5in, paperheight=11in,
-     includeheadfoot,
-     top=78pt, bottom=114pt, inner=81pt, outer=81pt,
-     marginparwidth=4pc,heightrounded
-     }%
-\or % acmtog
-   \geometry{twoside=true, head=13pt, foot=2pc,
-     paperwidth=8.5in, paperheight=11in,
-     includeheadfoot, columnsep=24pt,
-     top=52pt, bottom=75pt, inner=52pt, outer=52pt,
-     marginparwidth=2pc,heightrounded
-     }%
-\or % sigconf
-   \geometry{twoside=true, head=13pt,
-     paperwidth=8.5in, paperheight=11in,
-     includeheadfoot, columnsep=2pc,
-     top=57pt, bottom=73pt, inner=54pt, outer=54pt,
-     marginparwidth=2pc,heightrounded
-     }%
-\or % siggraph
-   \geometry{twoside=true, head=13pt,
-     paperwidth=8.5in, paperheight=11in,
-     includeheadfoot, columnsep=2pc,
-     top=57pt, bottom=73pt, inner=54pt, outer=54pt,
-     marginparwidth=2pc,heightrounded
-     }%
-\or % sigplan
-   \geometry{twoside=true, head=13pt,
-     paperwidth=8.5in, paperheight=11in,
-     includeheadfoot=false, columnsep=2pc,
-     top=1in, bottom=1in, inner=0.75in, outer=0.75in,
-     marginparwidth=2pc,heightrounded
-     }%
-\or % sigchi
-   \geometry{twoside=true, head=13pt,
-     paperwidth=8.5in, paperheight=11in,
-     includeheadfoot, columnsep=2pc,
-     top=66pt, bottom=73pt, inner=54pt, outer=54pt,
-     marginparwidth=2pc,heightrounded
-     }%
-\or % sigchi-a
-   \geometry{twoside=false, head=13pt,
-     paperwidth=11in, paperheight=8.5in,
-     includeheadfoot, marginparsep=72pt,
-     marginparwidth=170pt, columnsep=20pt,
-     top=72pt, bottom=72pt, left=314pt, right=72pt
-     }%
-     \@mparswitchfalse
-     \reversemarginpar
-\or % acmengage
-   \geometry{twoside=true, head=13pt,
-     paperwidth=8.5in, paperheight=11in,
-     includeheadfoot, columnsep=2pc,
-     top=57pt, bottom=73pt, inner=54pt, outer=54pt,
-     marginparwidth=2pc,heightrounded
-     }%
-\or % acmcp
-   \geometry{twoside=true,
-     includeheadfoot, head=13pt, foot=2pc,
-     paperwidth=6.75in, paperheight=10in,
-     top=58pt, bottom=44pt, inner=46pt, outer=46pt,
-     marginparwidth=2pc,heightrounded
-   }%
-\fi
+% \RequirePackage{geometry}
+% \ifcase\ACM@format@nr
+% \relax % manuscript
+%    \geometry{letterpaper,head=13pt,
+%    marginparwidth=6pc,heightrounded}%
+% \or % acmsmall
+%    \geometry{twoside=true,
+%      includeheadfoot, head=13pt, foot=2pc,
+%      paperwidth=6.75in, paperheight=10in,
+%      top=58pt, bottom=44pt, inner=46pt, outer=46pt,
+%      marginparwidth=2pc,heightrounded
+%    }%
+% \or % acmlarge
+%    \geometry{twoside=true, head=13pt, foot=2pc,
+%      paperwidth=8.5in, paperheight=11in,
+%      includeheadfoot,
+%      top=78pt, bottom=114pt, inner=81pt, outer=81pt,
+%      marginparwidth=4pc,heightrounded
+%      }%
+% \or % acmtog
+%    \geometry{twoside=true, head=13pt, foot=2pc,
+%      paperwidth=8.5in, paperheight=11in,
+%      includeheadfoot, columnsep=24pt,
+%      top=52pt, bottom=75pt, inner=52pt, outer=52pt,
+%      marginparwidth=2pc,heightrounded
+%      }%
+% \or % sigconf
+%    \geometry{twoside=true, head=13pt,
+%      paperwidth=8.5in, paperheight=11in,
+%      includeheadfoot, columnsep=2pc,
+%      top=57pt, bottom=73pt, inner=54pt, outer=54pt,
+%      marginparwidth=2pc,heightrounded
+%      }%
+% \or % siggraph
+%    \geometry{twoside=true, head=13pt,
+%      paperwidth=8.5in, paperheight=11in,
+%      includeheadfoot, columnsep=2pc,
+%      top=57pt, bottom=73pt, inner=54pt, outer=54pt,
+%      marginparwidth=2pc,heightrounded
+%      }%
+% \or % sigplan
+%    \geometry{twoside=true, head=13pt,
+%      paperwidth=8.5in, paperheight=11in,
+%      includeheadfoot=false, columnsep=2pc,
+%      top=1in, bottom=1in, inner=0.75in, outer=0.75in,
+%      marginparwidth=2pc,heightrounded
+%      }%
+% \or % sigchi
+%    \geometry{twoside=true, head=13pt,
+%      paperwidth=8.5in, paperheight=11in,
+%      includeheadfoot, columnsep=2pc,
+%      top=66pt, bottom=73pt, inner=54pt, outer=54pt,
+%      marginparwidth=2pc,heightrounded
+%      }%
+% \or % sigchi-a
+%    \geometry{twoside=false, head=13pt,
+%      paperwidth=11in, paperheight=8.5in,
+%      includeheadfoot, marginparsep=72pt,
+%      marginparwidth=170pt, columnsep=20pt,
+%      top=72pt, bottom=72pt, left=314pt, right=72pt
+%      }%
+%      \@mparswitchfalse
+%      \reversemarginpar
+% \or % acmengage
+%    \geometry{twoside=true, head=13pt,
+%      paperwidth=8.5in, paperheight=11in,
+%      includeheadfoot, columnsep=2pc,
+%      top=57pt, bottom=73pt, inner=54pt, outer=54pt,
+%      marginparwidth=2pc,heightrounded
+%      }%
+% \or % acmcp
+%    \geometry{twoside=true,
+%      includeheadfoot, head=13pt, foot=2pc,
+%      paperwidth=6.75in, paperheight=10in,
+%      top=58pt, bottom=44pt, inner=46pt, outer=46pt,
+%      marginparwidth=2pc,heightrounded
+%    }%
+% \fi
 \setlength\parindent{10\p@}
 \setlength\parskip{\z@}
 \ifcase\ACM@format@nr
