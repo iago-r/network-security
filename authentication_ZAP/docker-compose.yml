@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  zaproxy:
+    image: zaproxy/zap-stable
+    command: ["zap.sh", "-config", "api.key=${ZAP_API_KEY}", "-daemon", "-host", "0.0.0.0", "-port", "8080", "-config", "api.addrs.addr.name=.*", "-config", "api.addrs.addr.regex=true"]
+    ports:
+      - "8080:8080"
+    networks:
+      - zapnet
+    environment:
+      - ZAP_API_KEY=${ZAP_API_KEY}
+    volumes:
+      - shared_data:/shared_data
+
+  framework:
+    build: .
+    environment:
+      - FILE=${FILE}
+      - FIREFOX=/usr/local/bin/geckodriver
+      - ZAP_API_KEY=${ZAP_API_KEY}
+      - ZAP_PROXY_ADDRESS=zaproxy
+    networks:
+      - zapnet
+    depends_on:
+      - zaproxy
+    volumes:
+      - .:/app
+      - shared_data:/shared_data
+
+networks:
+  zapnet:
+    driver: bridge
+
+volumes:
+  shared_data:

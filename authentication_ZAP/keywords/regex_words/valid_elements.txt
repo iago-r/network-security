@@ -1,0 +1,4 @@
+\b[\w.-]*senha[\w.-]*\b
+\b[\w.-]*user[\w.-]*\b
+\b[\w.-]*email[\w.-]*\b
+\b[\w.-]*password[\w.-]*\b
