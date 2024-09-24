@@ -146,9 +146,25 @@
 
 * ```msfconsole``` abre terminal do metasploit
 
-* Trabalha com módulos pesquiso com ```search```
+* Trabalha com módulos que realizam os exploits. 
 
-  * ex: ```search type:<ex: exploit> platform:<ex: windows>``` para usar exploit -> preciso associar a payload (carrega exploit)
+  * Pesquiso com ```search```
+
+    * ex: ```search type:<ex: exploit> platform:<ex: windows>``` para usar exploit -> preciso associar a payload (carrega exploit)
+
+  * após encontrar, ```set <payload name>``` para usar. Ao digitar ```info``` são retornados os parâmetros necessários para a execução.
+
+  * Alguns exploits possuem comando ```check``` para [checar se a vulnerabilidade existe antes de realizar o exploit](https://github.com/rapid7/metasploit-framework/wiki/How-to-write-a-check()-method/7ab477018e5ed45f7b8b1b32b9ab7e7a17ba3126).
+
+  * Comando ```run``` executa
+
+  * Importante: Tomar cuidado com alguns módulos, podem ser muito agressivos.
+
+    * Importante analisar a qualidade do teste realizado pelo Metasploit, semelhante ao QOD do OpenVAS que mede a qualidade da detecção, porém no caso o ['ranking'](https://docs.metasploit.com/docs/using-metasploit/intermediate/exploit-ranking.html) utilizado pelo metasploit determina a chance do exploit ter sucesso.
+
+* [Possíveis retornos para vulnerabilidades](https://docs.metasploit.com/api/Msf/Exploit/CheckCode.html)
+
+* [Script para buscar lista de CVEs no metasploit](https://github.com/tunnelcat/metasploit-cve-search )
 
 ## Sn1per
 
@@ -200,7 +216,12 @@
 
 * Possui ferramentas de scan de vulnerabilidades, descoberta de subdominios, crawlers ...
 
-  * Subfinder = Encontrar subdomínios e subpáginas (não encontrou tantos resultados quanto Sn1per - usa ferramenta spider)
+  * [Subfinder](https://github.com/projectdiscovery/subfinder) = Encontrar subdomínios e subpáginas (não encontrou tantos resultados quanto Sn1per -> usa ferramenta spider)
+
+  * [h8mail](https://github.com/khast3x/h8mail) = Encontrar informações públicas relacionadas a algum usuário ou e-mail informado. Funcionamento simples, retornando serviços comuns (facebook, linkedin ...) que possuem o perfil informado. É possível ampliar a análise informando APIs de vazamentos, como o [Have I been pwned](https://haveibeenpwned.com/).
+
+  * [wpscan](https://github.com/wpscanteam/wpscan) = Ferramenta para encontrar vulnerabilidades em sites wordpress. Útil pois coleta informações específicas do serviço wordpress, como plugins desatualizados, temas e versões. É possível integrar a ferramenta com a API do [WPScan](https://wpscan.com/api/), retornando assim além dos resultados, as vulnerabilidades associadas a cada problema encontrado.
+
 
 ## Nuclei
 
@@ -227,6 +248,8 @@
     * Mais de 8000 templates
 
     * Possível controlar taxa de sondagem, número de tentativas e outros parâmetros relacionados a performance
+
+    * Possui templates com códigos javascript que executam tarefas mais elaboradas (ex: brute force)
 
 * Possível ser usado para fazer [autenticação](https://docs.projectdiscovery.io/tools/nuclei/authenticated-scans)
   
@@ -301,6 +324,10 @@
 
   * Representa QOD de detecção e execução conforme o CPE existente, não qualifica o teste da vulnerabilidade em si
 
+* [Informações OpenVAS cli](https://forum.greenbone.net/t/openvas-cli-commands/1428)
+
+* [Reports OpenVAS multiplos CVEs](https://docs.google.com/document/d/1mEUaCtZ0zb9yBUhmnN_t0aM5mlOAk0zCI4wCdN94VY8/edit?pli=1#bookmark=id.szrquyb5saru) CONFERIR ISSO AQUI ***********************************
+
 ## Netcat
 
 * Permite comunicação entre dois dispositivos
@@ -373,13 +400,37 @@
 
 * A comparação entre as ferramentas gira muito em torno de Cobertura x Qualidade da detecção. O OpenVAS apresenta uma enorme quantidade de NVTs, cobrindo também uma enorme quantidade de CVEs em comparação as demais ferramentas. No entanto, muitas verificações são apenas de versão das aplicações em execução, não testando exatamente se a vulnerabilidade existe OU necessitando de um scan autenticado para obter informações do SO (como pacotes instalados), oferecendo maior segurança nas respostas. Já o Nuclei possui maior quantidade de templates, no entanto, suas verificações são muito rasas, fazendo apenas match de regex com a reposta. Já o NMap é o que apresenta maior qualidade de detecção de maneira geral, possuindo verificações mais profundas, realizando uma montagem cuidadosa das requisições e análise das respostas, porém apresenta muito poucos CVEs que são cobertos por seus scripts.
 
+## Observações Metasploit x NMap x OpenVAS para diferentes CVEs
+
+* [Discussão no google docs](https://docs.google.com/document/d/1mEUaCtZ0zb9yBUhmnN_t0aM5mlOAk0zCI4wCdN94VY8/edit?pli=1#bookmark=id.eura0e5jhttu)
+
+* CVE 2014-9222 -> Misfortune Cookie. Cookie específico utilizado permite confundir o servidor que retorna a URL que foi passada como fonte na requisição. Ambas as ferramentas analisadas (NMap x OpenVAS x Metasploit) trabalham com o mesmo valor de cookie e o NMap e Metasploit realizam o exploit da vulnerabilidade, enquanto o OpenVAS realiza apenas a verificação e não é classificado diremente como exploit (QOD 99 e não existe menção a exploit na explicação do código). No entanto, ao analisar os processos realizados, ambos NMap e OpenVAS atuam de maneira idêntica, fazendo a requisição passando o cookie e então checando se na resposta existe o caminho passado na requisição (no caso, ambas as aplicações checam exatamente a mesma resposta retornada pelo servidor). Metasploit possui dois códigos de exploit, porém apenas 1 foi analisado pois usa o mesmo cookie das outras aplicações (possui ranking Normal). O funcionamento é semelhante, fazendo a requisição e verificação a saída. No entanto, o processo do metasploit é um pouco mais elaborado, como exemplo, testando diferentes caminhos possíveis, verificando diferentes códigos de resposta, além de retornar diferentes possibilidades para o teste (no caso, com a vulnerabilidade sendo: não detectada porém com o serviço analisado presente / desconhecida para o alvo / vulneravel / segura / parece vulneravel)
+
+* [Slowloris](https://docs.google.com/document/d/1mEUaCtZ0zb9yBUhmnN_t0aM5mlOAk0zCI4wCdN94VY8/edit?pli=1#bookmark=id.sdyhw7ew7g07) Atuação do metasploit não é semelhante a outras aplicações, como no caso do Nmap (discutido no link mencionado) que faz o exploit de maneira mais controlada, tendo alguns mecanismos de parada do ataque. Já o Metasploi realizada não somente a detecção, mas também o exploit, que é executado pelo maior tempo possível na máquina alvo - podendo continuar indefinidamente.
+
+* CVE 2015-2208 -> Vulnerabilidade de injeção de código PHP. Nesse caso, a comparaçaõ foi feita entre o OpenVAS e o Metasploit. Ambos os códigos atuam de maneira bem semelhante, fazendo a requisição com algum comando a ser executado na porta com a aplicação php e checando se o retorno do comando está presente na resposta. O Openvas (QOD 100) realiza o teste com um comando simples - phpinfo() - e então verifica se está presente na resposta. A requisição é feita para uma lista de possíveis caminhos que o OpenVAS testa. Já o metasploit (ranking Excelent) utiliza a URL informada pelo usuário para fazer o exploit, tendo uma abordagem mais direta visto que já é conhecida a URL alvo, no entanto, necessita que o usuário tenha essa informação. Outro ponto é que o metasploit consegue realizar a checagem da vulnerabilidade com um comando simples - echo() - no entanto, consegue também realizar o exploit, executando algum payload que o usuário desejar - ex: reverse shell - ou algum outro payload presente na própria aplicação.
+
+* [Informações no google docs sobre similaridade de Jaccard do Metasploit e OpenVAS](https://docs.google.com/document/d/1mEUaCtZ0zb9yBUhmnN_t0aM5mlOAk0zCI4wCdN94VY8/edit?pli=1#bookmark=id.vukq5ytzf6f1). Análise realizada pois ambas as ferramentas possuem um número razoável (mais de 50) de testes envolvendo mais de um CVE. A ideia é analisar como é feita a detecção nesses casos e se as ferramentas operam de maneira semelhante. O gráfico apresenta mais valores na parte esquerda inferior (baixos coeficientes de Jaccard) mostrando que a interseção entre as ferramentas é baixa -> o que é válido, pois o metasploit atua fazendo checagens e exploits em baixo nível, enquanto o OpenVAS possui testes com muitos CVEs de uma só vez que realizam apenas verificações de versões por exemplo. 
+
+  * Mais informações sobre os plugins do OpenVAS com diversos CVEs estão disponíveis no Google Docs: [link1](https://docs.google.com/document/d/1mEUaCtZ0zb9yBUhmnN_t0aM5mlOAk0zCI4wCdN94VY8/edit?pli=1#bookmark=id.yxh5knqqsmp4), [link2](https://docs.google.com/document/d/1mEUaCtZ0zb9yBUhmnN_t0aM5mlOAk0zCI4wCdN94VY8/edit?pli=1#bookmark=id.g0xvu37334ap)
+
+## Comparação Nessus x OpenVAS para CVE-2016-2183
+
+* CVE-2016-2183 -> Vulnerabilidade de cifras com força média (DES e 3DES usam 64 bits) que podem ter colisões dos blocos criptografados explorado. [Discussão no Google Docs](https://docs.google.com/document/d/1mEUaCtZ0zb9yBUhmnN_t0aM5mlOAk0zCI4wCdN94VY8/edit?pli=1#bookmark=id.5q1au67s9x8h) Nessus e OpenVAS atuam de forma bem semelhante. Nessus pega as cifras da aplicação e então faz a verificação de acordo com a versão do serviço em execução (SSL / TLS) e checa a força das cifras. Existem diversas informações de cifras existentes na própria aplicação (+600 linhas) que são usadas para fazer a verificação da força da cifra do servidor, juntamente também a quantidade de bits utilizada. Nessus verifica diretamente 6 tipos de encapsulamento (SSL2-3, TLS1-1.1-1.2-1.3). OpenVAS trabalha de maneira semelhante, possui banco de cifras e descrições como o Nessus (quase 600 linhas). OpenVAS atua verificando diretamente 4 tipos de encapsulamento (SSL3, TLS1-1.1-1.2). Desse modo, mesmo com abordagens semelhantes, o Nessus atua de maneira mais robusta e verifica mais condições possíveis em comparação ao OpenVAS. Nos testes realizados em aplicações, o Nessus conseguiu identificar a vulnerabilidade em um host, enquanto o OpenVAS não. Como analisado ao longo do tempo, muito do código e dos procedimentos realizados por ambas as ferramentas são semelhantes e analisando a resposta das cifras utilizadas na máquina host, tanto o OpenVAS quanto o Nessus identificam as cifras utilizadas. Verificando [discussões em fóruns online](https://forum.greenbone.net/t/openvas-sometimes-does-not-detect-cve-2016-2183-sweet32/15844/2) o motivo para não detecção por parte do OpenVAS é por conta da porta da aplicação, que no caso, deveria ser uma porta com um aplicação HTTP (que não era a situação da máquina host).
+
+## Comparação vulnerabilidades sem CVE associado
+
+* Brute Force VNC = A vulnerabilidade é associada a possibilidae de login via força bruta no protocolo VNC (sem CVE associado pois não é falha de software, mas sim falha de configuração no dispositivo analisado). OpenVAS (QOD 95) e NMap atuam de maneira bem semelhantes, fazendo as etapas de Conexão no Servidor -> Handshake Inicial -> Checagem dos tipos de autenticação -> Teste de senhas. No processo, ambas as ferramentas possuem salvos os tipos possíveis de autenticações aceitas no protocolo, cuidam das etapas de criptografia e verificação de versões para identificar os tipos de autenticação disponíveis. Vale destacar que o NMap é um pouco mais completo e salva diferentes possibilidaes de autenticação. No cenário testado, ambas as ferramentas chegaram ao mesmo resultado mostrando que a máquina alvo não possuia métodos de autenticação. [Discussão no google docs](https://docs.google.com/document/d/1mEUaCtZ0zb9yBUhmnN_t0aM5mlOAk0zCI4wCdN94VY8/edit?pli=1#bookmark=id.4faeogtxf92f)
+
+* Weak MAC algorithms SSH = A vulnerabilidade é associada a algoritmos fracos utilizados em uma máquina (sem CVE associado pois operador da máquina não deve utilizar algoritmos fracos). Tanto OpenVAS, Nuclei e Nessus fazem a verificação dessa vulnerabilidade, atuando de maneira bem semelhanteverificando os tipos de algoritmos aceitos e reportando caso algoritmos MD5 ou de 96 bits são utilizados. Vale destacar que o OpenVAS é o único que verifica o caso de algoritmos de 64 bits sendo utilizados. [Discussão no google docs](https://docs.google.com/document/d/1mEUaCtZ0zb9yBUhmnN_t0aM5mlOAk0zCI4wCdN94VY8/edit?pli=1#bookmark=id.4faeogtxf92f)
+
 ## Comparação funcionalidades x Aplicações
 
 |         | SO | MAC | Ports / Aplication / Version | CVE | CVSS | VPR | Show if exploit exists | Time to scan | Export Report | Topology   | Scan control | Last reboot | Scan TCP/UDP | CVE Solution | Authentication | WAF |
 |:------- |:--:|:---:|:----------------------------:|:---:|:----:|:---:|:----------------------:|:------------:|:-------------:|:----------:|:------------:|:-----------:|:------------:|:------------:|:--------------:|:---:|
 | NMap    | X  |X    | X                            | X   | X    |     | X                      | Fast         | XML           | Zenmap*    | High         | X           | X            |              |                | X   |
 | Sn1per  | X  |X    | X                            | X   | X    |     | X                      | Fast         | XML / HTML    |            | High         |             | X            |              |                | X   |
-| Nuclei  | X  |X    | -                            | -   | -    |     | X                      | Fast         | JSON / MD     |            | High         |             |              |              | X              | X   |
+| Nuclei  | X  |X    | -                            | X   | X    |     | X                      | Fast         | JSON / MD     |            | High         |             |              |              | X              | X   |
 | OpenVAS | X  |X    | X                            | X   | X    |     | X                      | Slow         | GUI / XML     | -          | High         |             | X            | X            | X              |     |
 | Nessus  | X  |X    | X                            | X   | X    | X   | X                      | Slow         | GUI           |            | High         |             |              | X            | X              |     |
 
@@ -406,6 +457,23 @@
 * Last reboot = Não é tão preciso, erra por alguns dias.
 
 -------------
+
+## Funcionalidades adicionais de ferramentas pagas em comparação a versões gratuitas
+
+|         | Description | Support | Integrations | Team | Performance | Reports | Interface | Vulnerabilities | Updates | Backup |
+|:------- |:--:|:--:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| Nuclei | Project Discovery has pro and enterprise plans | By chat | External services like Slack, Github and Azure in addition to its own API | Team workspace and API | More powerfull scans | JSON, PDF, CSV | - | - | - | - |
+| Metasploit | Rapid7 has the Pro version of Metasploit in addition to other products and services for sale | - | It has its own API and external services, like Nmap and OpenVAS | - | - | More support to reports | Web interface | More exploits and automated workflows to check vulnerabilities | - | - |
+| Nmap | The Nmap Organization sells OEM licenses to integrate Nmap software with other products | Commercial Support | - | - | - | - | - | - | Automatic | - |
+| OpenVAS | Greenbone offers enterprise and Cloud services | Assured with SLA | It has its own API and external services like  Cisco FireSight, Nagios ... | - | Optimized for hardware | Free version already supports different types of reports | Free version already has a web interface | Database (Enterprise Feed) with vulnerabilities to enterprise products and specific compliance checks (healthcare, finances ...). 30% more NVTs | Automatic | Manual or automatic |
+
+### Observações
+
+* \- = No information
+
+* [NVTs openvas](https://community.greenbone.net/uploads/default/original/2X/a/abe9acece80fdd9a03427b81692830b6e23824d8.png)
+
+------------
 
 * Outras aplicações para serem checadas
 
