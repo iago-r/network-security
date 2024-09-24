@@ -326,7 +326,7 @@
 
 * [Informações OpenVAS cli](https://forum.greenbone.net/t/openvas-cli-commands/1428)
 
-* [Reports OpenVAS multiplos CVEs](https://docs.google.com/document/d/1mEUaCtZ0zb9yBUhmnN_t0aM5mlOAk0zCI4wCdN94VY8/edit?pli=1#bookmark=id.szrquyb5saru) CONFERIR ISSO AQUI ***********************************
+* [Reports OpenVAS multiplos CVEs](https://docs.google.com/document/d/1mEUaCtZ0zb9yBUhmnN_t0aM5mlOAk0zCI4wCdN94VY8/edit?pli=1#bookmark=id.szrquyb5saru)
 
 ## Netcat
 
