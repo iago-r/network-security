@@ -1,13 +1,9 @@
 #!/usr/bin/env python3
 
 import argparse
-import ipaddress
-import json
 import logging
 import os
-import pathlib
 import sys
-from typing import Optional
 import requests
 import hashlib
 
@@ -24,9 +20,9 @@ def create_parser():
     parser = argparse.ArgumentParser(description=desc)
 
     parser.add_argument(
-        "--interative",
+        "--interactive",
         required=False,
-        help="Run this script in interative mode.",
+        help="Run this script in interactive mode.",
         action="store_true"
     )
 
@@ -36,7 +32,7 @@ def create_parser():
         action="store",
         type=str,
         required=False,
-        help=f"Dumps specification date:\n {HELP}"
+        help=f"Download a specificated date:\n {HELP}"
     )
 
     parser.add_argument(
@@ -141,13 +137,13 @@ def main():
 
     max_retries = 10
 
-    if opts.interative:
+    if opts.interactive:
         dumps = _list_dumps(opts)
         download_days_str = input(f"All the following dumps are available to download: {dumps}\n{HELP}\nChoose one option: ")
     elif opts.dumps:
         download_days_str = opts.dumps
     else:
-        logging.error(f"Parameter 'interative' or 'dumps' must be informed.")
+        logging.error(f"Parameter 'interactive' or 'dumps' must be informed.")
         return 1
 
     download_days_str = download_days_str.strip().replace(" ", "")
