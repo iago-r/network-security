@@ -1,0 +1,20 @@
+26592,16397 - Equinix Brasil
+8075 - Microsoft Corporation
+19089,13878 - UOL Diveo
+4230 - Claro
+16474,31898,15334 - Responsys / OracleDNS
+28369 - SIGNALLINK INFORMATICA LTDA
+18881 - Telefonica
+AS262545 - Mandic SA
+16735 - Algar Telecom
+14571 - Oi Movel SA
+8167,7738 - Brasil Telecom / VTal
+36351 - Softlayer
+14618,16509 - Amazon EC2
+25934 - Syniverse
+11377 - Sendgrid
+55248 - Whoa Networks
+46606 - Unified Layer
+54113 - Fastly
+15169 - Google
+47846 - InternetX .DE
