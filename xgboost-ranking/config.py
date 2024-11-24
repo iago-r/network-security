@@ -19,6 +19,8 @@ PSQL_USER = "postgres"
 PSQL_PASS = "w!xK3b<js9#Ud6cEe9BjjpJuJC&8"
 PSQL_PORT = 5432
 
+RANDOM_STATE = 42
+
 CRON_EXPRESSION = os.environ.get("CRON_EXPRESSION", "*/1 * * * *")
 RETENTION_VACUUM_HOURS = 24 * 7
 RETENTION_VACUUM_TIMEDELTA = datetime.timedelta(hours=RETENTION_VACUUM_HOURS)
@@ -45,3 +47,4 @@ SHODAN_DESIRED_COLUMNS = [
     "vulns",
     "vulns_scores",
 ]
+CATEGORICAL_FEATURES = ["port", "device", "devicetype"]

@@ -64,27 +64,31 @@ def replace_json_normalize(df: DataFrame, column: str, prefix: str = "") -> Data
 
 class DatasetManager:
     def __init__(self, tlhop_epss_report_fp: Path):
-        self.datestr2version = {}
         self.tlhop_epss_report_fp: Path = tlhop_epss_report_fp
-        # self.tlhop_epss_views_fp: Path = tlhop_epss_views_fp
-        # self.n_views = 3
-        # self.sampled_data = None
         assert self.tlhop_epss_report_fp.exists()
-        # assert self.tlhop_epss_views_fp.exists()
-        self.table: DeltaTable = DeltaTable(self.tlhop_epss_report_fp)
+        self.table = DeltaTable(self.tlhop_epss_report_fp)
+        self.datestr2version: dict[str, int] = {}
+        self.datestr2df: dict[str, DataFrame] = {}
         self.kev_df: DataFrame = None
         self.org_df: DataFrame = None
         self.cve_df: DataFrame = None
         self.votes_df: DataFrame = None
+        self.device_categories = None
+        self.devicetype_categories = None
+        # self.tlhop_epss_views_fp: Path = tlhop_epss_views_fp
+        # self.n_views = 3
+        # self.sampled_data = None
+        # assert self.tlhop_epss_views_fp.exists()
 
-    def load_datasets(self):
-        self.load_shodan_datasets()
+    def load_datasets(self, datestr_list: list[str]):
+        self.build_datestr2version()
+        self.load_shodan_df(datestr_list)
         self.load_org_classifications()
         self.load_cve_classifications()
         self.load_kev_database()
         self.load_votes()
 
-    def load_shodan_datasets(self):
+    def build_datestr2version(self):
         shodan_fn_regex = re.compile(r"BR\.(?P<date>\d+)\.json\.bz2")
         write_commits = 0
         last_vacuum_tstamp = None
@@ -124,6 +128,27 @@ class DatasetManager:
             min(self.datestr2version.keys()),
             max(self.datestr2version.keys()),
         )
+
+    def load_shodan_df(self, datestr_list: list[str]):
+        for datestr in datestr_list:
+            version = self.datestr2version[datestr]
+            df = DeltaTable(self.tlhop_epss_report_fp, version=version).to_pandas()
+            self.datestr2df[datestr] = df
+
+        devices = pandas.Series(pandas.unique(
+            pandas.concat([df["device"].dropna() for df in self.datestr2df.values()])
+        ))
+        self.device_categories = pandas.CategoricalDtype(categories=devices, ordered=True)
+
+        devtypes = pandas.Series(pandas.unique(
+            pandas.concat([df["devicetype"].dropna() for df in self.datestr2df.values()])
+        ))
+        self.devicetype_categories = pandas.CategoricalDtype(categories=devtypes, ordered=True)
+
+        for df in self.datestr2df.values():
+            df["port"] = df["port"].astype("category")
+            df["device"] = df["device"].astype(self.device_categories)
+            df["devicetype"] = df["devicetype"].astype(self.devicetype_categories)
 
     def load_kev_database(self):
         self.kev_df = read_kev_json(config.INPUT_KEV_JSON)
@@ -392,35 +417,36 @@ class DatasetManager:
     #         next_run = datetime.now()
     #     return next_run
 
-    def join_columns(self, df: DataFrame, datestr: str):
+    def join_votes_shodan_df(self, df: DataFrame, datestr: str):
         assert time.strptime(datestr, "%Y-%m-%d")
+        # version = self.datestr2version[datestr]
+        # day_df = DeltaTable(self.tlhop_epss_report_fp, version=version).to_pandas()
+        day_df = self.datestr2df[datestr].copy()
+        day_df.set_index("meta_id", inplace=True)
+
         for column in config.SHODAN_DESIRED_COLUMNS:
             if column not in df.columns:
                 df[column] = None
-        version = self.datestr2version[datestr]
-        day_df = DeltaTable(self.tlhop_epss_report_fp, version=version).to_pandas()
-        day_df.set_index("meta_id", inplace=True)
+                df[column] = df[column].astype(day_df[column].dtype)
+
         df.set_index("meta_id", inplace=True)
         df.update(day_df)
         df.reset_index(inplace=True)
         df.dropna(subset=["vulns"], inplace=True)
         logging.info("Merged Shodan columns")
 
-        def max_epss_cve_id(vulns):
-            return max(vulns, key=lambda x: x["epss"])["cve_id"]
-
-        df["max_epss_cve_id"] = df["vulns"].apply(max_epss_cve_id)
-
-        df["in_kev"] = df["max_epss_cve_id"].isin(self.kev_df["cveID"])
-        logging.info("Built in_kev column")
+    def join_org_features(self, features_df: DataFrame, shodan_df: DataFrame):
+        df = shodan_df.copy()
 
         org_cols = [col for col in self.org_df.columns if col.startswith("org_c")]
         for column in org_cols:
             if column not in df.columns:
                 df[column] = None
+                df[column] = df[column].astype(self.org_df[column].dtype)
 
         warnings.filterwarnings("ignore", category=pandas.errors.PerformanceWarning)
 
+        # Try join from most specific to least specific
         for index in [["ip_str", "port", "orgname"], ["ip_str", "orgname"], ["orgname"]]:
             org_df = self.org_df.copy()
             org_df.set_index(index, inplace=True)
@@ -438,63 +464,77 @@ class DatasetManager:
             df.reset_index(inplace=True)
             df.rename(columns={"orgname": "org_clean"}, inplace=True)
 
-        logging.info("Merged organization columns")
-
         warnings.resetwarnings()
 
+        for col in df.columns:
+            if col.startswith("org_c_"):
+                features_df[col] = df[col]
+
+        logging.info("Merged organization features")
+
+    def join_cve_features(self, df: DataFrame):
         cve_cols = [col for col in self.cve_df.columns if col.startswith("cve_c")]
         for column in cve_cols:
             if column not in df.columns:
                 df[column] = None
+                df[column] = df[column].astype(self.cve_df[column].dtype)
         self.cve_df.set_index("cve", inplace=True)
         df.set_index("max_epss_cve_id", inplace=True)
         df.update(self.cve_df)
         df.reset_index(inplace=True)
-        logging.info("Merged CVE columns")
+        logging.info("Joined CVE columns")
         self.cve_df.reset_index(inplace=True)
 
+    def build_features_df(self, df: DataFrame) -> DataFrame:
+        features_df = DataFrame(df[["user_id", "username", "vote", "ip_str", "port", "device", "devicetype"]])
 
-def extract_row_features(row):
-    assert isinstance(row["vulns"], np.ndarray)
-    vulns = np.atleast_1d(row["vulns"])
-    num_vulns = vulns.size
-    num_critical = sum(1 for vuln in vulns if vuln["cvss_rank"] == "critical")
-    num_high = sum(1 for vuln in vulns if vuln["cvss_rank"] == "high")
+        def max_epss_cve_id(vulns):
+            return max(vulns, key=lambda x: x["epss"])["cve_id"]
 
-    assert isinstance(row["vulns_scores"], dict)
-    max_epss = row["vulns_scores"]["epss"].max()
-    max_cvss = row["vulns_scores"]["cvss_score"].max()
+        features_df["max_epss_cve_id"] = df["vulns"].apply(max_epss_cve_id)
+        features_df["in_kev"] = features_df["max_epss_cve_id"].isin(self.kev_df["cveID"])
+        self.join_cve_features(features_df)
 
-    num_hostnames = row["hostnames"].size if isinstance(row["hostnames"], np.ndarray) else 0
-    num_domains = row["domains"].size if isinstance(row["domains"], np.ndarray) else 0
-    num_domains = row["domains"].size if isinstance(row["domains"], np.ndarray) else 0
+        def summarize_vulns(row):
+            vulns = row["vulns"]
+            assert isinstance(vulns, np.ndarray)
+            vulns = np.atleast_1d(vulns)
+            num_vulns = vulns.size
+            num_critical = sum(1 for vuln in vulns if vuln["cvss_rank"] == "critical")
+            num_high = sum(1 for vuln in vulns if vuln["cvss_rank"] == "high")
+            return [num_vulns, num_critical, num_high]
 
-    num_cpes = 0
-    if row["cpe23"] is not None and isinstance(row["cpe23"], np.ndarray):
-        cpe23 = np.atleast_1d(row["vulns"])
-        num_cpes = cpe23.size
+        features_df[["num_vulns", "num_crit_sev", "num_high_sev"]] = df.apply(summarize_vulns, axis=1, result_type="expand")
 
-    features = {
-        "user_id": row["user_id"],
-        "user_name": row["username"],
-        "vote": int(row["vote"]),
-        "ip_str": row["ip_str"],
-        "port": str(int(row["port"])),  # we want it handled as a categorical feature
-        "num_hostnames": num_hostnames,
-        "num_domains": num_domains,
-        "device": row["device"],
-        "devicetype": row["devicetype"],
-        "max_epss": max_epss,
-        "max_cvss": max_cvss,
-        "num_vulns": num_vulns,
-        "num_critical_sev": num_critical,
-        "num_high_sev": num_high,
-        "num_cpes": num_cpes,
-        "in_kev": row["in_kev"],
-    }
+        def summarize_scores(row):
+            scores = row["vulns_scores"]
+            assert isinstance(scores, dict)
+            max_epss = scores["epss"].max()
+            max_cvss = scores["cvss_score"].max()
+            return [max_epss, max_cvss]
 
-    for col in row.index:
-        if col.startswith("org_c_") or col.startswith("cve_c_"):
-            features[col] = row[col]
+        features_df[["max_epss", "max_cvss"]] = df.apply(summarize_scores, axis=1, result_type="expand")
 
-    return features
+        features_df["num_hostnames"] = df["hostnames"].apply(
+            lambda hosts: hosts.size if isinstance(hosts, np.ndarray) else 0
+        )
+        features_df["num_domains"] = df["domains"].apply(
+            lambda domains: domains.size if isinstance(domains, np.ndarray) else 0
+        )
+
+        def count_cpes(cpe23s):
+            num_cpes = 0
+            if cpe23s is not None and isinstance(cpe23s, np.ndarray):
+                cpe23s = np.atleast_1d(cpe23s)
+                num_cpes = cpe23s.size
+            return num_cpes
+
+        features_df["num_cpes"] = df["cpe23"].apply(count_cpes)
+
+        for feat in config.CATEGORICAL_FEATURES:
+            assert features_df[feat].dtype == "category", str(features_df[feat].dtype)
+
+        self.join_org_features(features_df, df)
+        features_df.drop(columns=["user_id", "max_epss_cve_id"], inplace=True)
+
+        return features_df
