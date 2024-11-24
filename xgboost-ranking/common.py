@@ -246,34 +246,26 @@ class DatasetManager:
 
     #     return df
 
-    # def sample_data(self, day, random_state, entries):
-    #     """
-    #     Sample N random entries from the dataset and store them
-    #     """
-    #     commit = self.retrive_commit(day)
+    def sample_data(self, datestr: str, count: int, random_state: int) -> DataFrame:
+        assert time.strptime(datestr, "%Y-%m-%d")
+        version = self.datestr2version[datestr]
+        assert version >= 0
+        shodan_df = DeltaTable(self.tlhop_epss_report_fp, version=version).to_pandas()
+        shodan_df.dropna(subset=["vulns"], inplace=True)
+        logging.info(
+            "Loaded %d records from %s in %s", len(shodan_df), datestr, self.tlhop_epss_report_fp
+        )
 
-    #     if commit >= 0:
-    #         filepath = self.tlhop_epss_report_path
+        shodan_df["max_epss"] = shodan_df["vulns_scores"].apply(
+            lambda row: max(row.get("epss", [0]))
+        )
+        shodan_df["max_cvss"] = shodan_df["vulns_scores"].apply(
+            lambda row: max(row.get("cvss_score", [0]))
+        )
 
-    #         print(
-    #             f"[### SAMPLE_DATA ###] Sampling data for each user: {day} - Random state: {random_state}"
-    #         )
-    #         dt = DeltaTable(filepath, version=commit).to_pyarrow_dataset()
-
-    #         table = dt.to_table(columns=None)
-    #         df = table.to_pandas()
-
-    #         df["score"] = df["vulns_scores"].apply(
-    #             lambda x: max(x.get("epss", [0])) if isinstance(x, dict) else 0
-    #         )
-    #         df = df.drop(columns=["vulns_scores"])
-    #         # df = df.sort_values(by=sort_by, ascending=ascending)
-
-    #         # self.sampled_data = df.sample(n=600, random_state=42)
-    #         self.sampled_data = df.sample(n=entries, random_state=random_state)
-
-    #     else:
-    #         self.sampled_data = pd.DataFrame()
+        sampled_df = shodan_df.sample(n=count, random_state=random_state)
+        logging.info("Sampled %d entries from %s in %s", count, datestr, self.tlhop_epss_report_fp)
+        return sampled_df
 
     # def get_report_each(
     #     self,
