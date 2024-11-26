@@ -135,14 +135,16 @@ class DatasetManager:
             df = DeltaTable(self.tlhop_epss_report_fp, version=version).to_pandas()
             self.datestr2df[datestr] = df
 
-        devices = pandas.Series(pandas.unique(
-            pandas.concat([df["device"].dropna() for df in self.datestr2df.values()])
-        ))
+        devices = pandas.Series(
+            pandas.unique(pandas.concat([df["device"].dropna() for df in self.datestr2df.values()]))
+        )
         self.device_categories = pandas.CategoricalDtype(categories=devices, ordered=True)
 
-        devtypes = pandas.Series(pandas.unique(
-            pandas.concat([df["devicetype"].dropna() for df in self.datestr2df.values()])
-        ))
+        devtypes = pandas.Series(
+            pandas.unique(
+                pandas.concat([df["devicetype"].dropna() for df in self.datestr2df.values()])
+            )
+        )
         self.devicetype_categories = pandas.CategoricalDtype(categories=devtypes, ordered=True)
 
         for df in self.datestr2df.values():
@@ -433,6 +435,7 @@ class DatasetManager:
         df.update(day_df)
         df.reset_index(inplace=True)
         df.dropna(subset=["vulns"], inplace=True)
+        df.drop(df[df["username"] == "admin"].index, inplace=True)
         logging.info("Merged Shodan columns")
 
     def join_org_features(self, features_df: DataFrame, shodan_df: DataFrame):
@@ -485,8 +488,13 @@ class DatasetManager:
         logging.info("Joined CVE columns")
         self.cve_df.reset_index(inplace=True)
 
-    def build_features_df(self, df: DataFrame) -> DataFrame:
-        features_df = DataFrame(df[["user_id", "username", "vote", "ip_str", "port", "device", "devicetype"]])
+    def build_features_df(self, df: DataFrame, votes: bool = True) -> DataFrame:
+        vote_columns = ["username", "vote"]
+        copy_columns = ["port", "device", "devicetype"]
+        if votes:
+            features_df = DataFrame(df[vote_columns + copy_columns])
+        else:
+            features_df = DataFrame(df[copy_columns])
 
         def max_epss_cve_id(vulns):
             return max(vulns, key=lambda x: x["epss"])["cve_id"]
@@ -504,7 +512,9 @@ class DatasetManager:
             num_high = sum(1 for vuln in vulns if vuln["cvss_rank"] == "high")
             return [num_vulns, num_critical, num_high]
 
-        features_df[["num_vulns", "num_crit_sev", "num_high_sev"]] = df.apply(summarize_vulns, axis=1, result_type="expand")
+        features_df[["num_vulns", "num_crit_sev", "num_high_sev"]] = df.apply(
+            summarize_vulns, axis=1, result_type="expand"
+        )
 
         def summarize_scores(row):
             scores = row["vulns_scores"]
@@ -513,7 +523,9 @@ class DatasetManager:
             max_cvss = scores["cvss_score"].max()
             return [max_epss, max_cvss]
 
-        features_df[["max_epss", "max_cvss"]] = df.apply(summarize_scores, axis=1, result_type="expand")
+        features_df[["max_epss", "max_cvss"]] = df.apply(
+            summarize_scores, axis=1, result_type="expand"
+        )
 
         features_df["num_hostnames"] = df["hostnames"].apply(
             lambda hosts: hosts.size if isinstance(hosts, np.ndarray) else 0
@@ -535,6 +547,6 @@ class DatasetManager:
             assert features_df[feat].dtype == "category", str(features_df[feat].dtype)
 
         self.join_org_features(features_df, df)
-        features_df.drop(columns=["user_id", "max_epss_cve_id"], inplace=True)
+        features_df.drop(columns=["max_epss_cve_id"], inplace=True)
 
         return features_df
