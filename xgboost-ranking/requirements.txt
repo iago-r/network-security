@@ -1,0 +1,9 @@
+croniter
+deltalake
+faker
+ipykernel
+matplotlib
+pandas
+psycopg2-binary
+scikit-learn
+xgboost
