@@ -1,0 +1,5 @@
+deltalake
+ipykernel
+matplotlib
+pandas
+psycopg2-binary
