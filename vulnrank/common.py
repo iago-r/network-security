@@ -57,7 +57,7 @@ def read_kev_json(fp: Path) -> pandas.DataFrame:
 
 def replace_json_normalize(df: DataFrame, column: str, prefix: str = "") -> DataFrame:
     normalized_df = pandas.json_normalize(df[column])
-    colnames = [f"{prefix}{c.replace(" ", "_")}" for c in normalized_df.columns]
+    colnames = [f"{prefix}{c.replace(' ', '_')}" for c in normalized_df.columns]
     normalized_df.columns = colnames
     return pandas.concat([df.drop(columns=[column]), normalized_df], axis=1)
 
@@ -75,10 +75,6 @@ class DatasetManager:
         self.votes_df: DataFrame = None
         self.device_categories = None
         self.devicetype_categories = None
-        # self.tlhop_epss_views_fp: Path = tlhop_epss_views_fp
-        # self.n_views = 3
-        # self.sampled_data = None
-        # assert self.tlhop_epss_views_fp.exists()
 
     def load_datasets(self, datestr_list: list[str]):
         self.build_datestr2version()
@@ -87,6 +83,7 @@ class DatasetManager:
         self.load_cve_classifications()
         self.load_kev_database()
         self.load_votes()
+        self.kev_set = set(self.kev_df["cveID"].values)
 
     def build_datestr2version(self):
         shodan_fn_regex = re.compile(r"BR\.(?P<date>\d+)\.json\.bz2")
@@ -189,90 +186,6 @@ class DatasetManager:
         self.votes_df["datestr"] = self.votes_df["vote_date"].astype(str).str[:10]
         logging.info("Loaded %d votes from %d users", len(self.votes_df), len(users_df))
 
-    # def last_write_commit_tstamp(self) -> Optional[datetime]:
-    #     for commit in self.table.history():
-    #         if commit.get("operation", "") == "WRITE":
-    #             return datetime.fromtimestamp(commit["timestamp"] / 1e3)
-    #     return None
-
-    # def get_sorted_dates(self) -> list[str]:
-    #     return sorted(list(self.datestr2version.keys()), reverse=True)
-
-    # def get_last_write_dump_datestr(self) -> Optional[str]:
-    #     if dates := self.get_sorted_dates():
-    #         return dates[0]
-    #     return None
-
-    # def get_view_dataset(self, datestr: str, code):
-    #     if version := self.datestr2version[datestr]:
-    #         filepath = self.tlhop_epss_views_fp_template.format(code)
-    #         logging.debug("Loading view from %s", filepath)
-    #         return DeltaTable(filepath, version=version).to_pandas()
-    #     else:
-    #         return pd.DataFrame()
-
-    # def get_report_dataset(
-    #     self,
-    #     datestr: str,
-    #     columns: Optional[list[str]] = None,
-    #     condition=None,
-    # ):
-    #     if version := self.datestr2version.get(datestr):
-    #         return (
-    #             DeltaTable(self.tlhop_epss_report_fp, version=version)
-    #             .to_pyarrow_dataset()
-    #             .to_table(filter=condition, columns=columns)
-    #             .to_pandas()
-    #         )
-    #     else:
-    #         msg = "Tried to access nonexistent commit %s on %s"
-    #         logging.warning(msg, datestr, self.tlhop_epss_report_fp)
-    #         return pd.DataFrame()
-
-    # def get_report_dataset_new(
-    #     self,
-    #     day,
-    #     columns=None,
-    #     condition=None,
-    #     single_output=False,
-    #     start=0,
-    #     finish=-1,
-    #     sort_by="score",
-    #     ascending=False,
-    # ):
-    #     commit = self.retrive_commit(day)
-    #     df = None
-    #     if commit >= 0:
-    #         filepath = self.tlhop_epss_report_path
-
-    #         print(f"Reading report of day {day}")
-    #         dt = DeltaTable(filepath, version=commit).to_pyarrow_dataset()
-
-    #         if single_output:
-    #             df = dt.filter(condition).head(1).to_pydict()
-    #         else:
-    #             table = dt.to_table(filter=condition, columns=None)
-    #             df = table.to_pandas()
-    #             # df['score'] = df['vulns_scores'].apply(lambda x: x.get('epss', []) if isinstance(x, dict) else [])
-    #             # df['score'] = df['score'].apply(lambda probs: 1 - np.prod([1 - p for p in probs]))
-    #             df["score"] = df["vulns_scores"].apply(
-    #                 lambda x: max(x.get("epss", [0])) if isinstance(x, dict) else 0
-    #             )
-    #             df = df.drop(columns=["vulns_scores"])
-    #             # df = df.sort_values(by=sort_by, ascending=ascending)
-
-    #             # Sample 600 random entries
-    #             df = df.sample(n=600, random_state=42)
-
-    #             if finish > 0:
-    #                 df = df.iloc[start:finish]
-
-    #         file_path = "file_ips.csv"
-    #         df.to_csv(file_path, index=False)
-    #         print(f"DataFrame saved to {file_path} successfully.")
-
-    #     return df
-
     def sample_data(self, datestr: str, count: int, random_state: int) -> DataFrame:
         assert time.strptime(datestr, "%Y-%m-%d")
         version = self.datestr2version[datestr]
@@ -294,135 +207,8 @@ class DatasetManager:
         logging.info("Sampled %d entries from %s in %s", count, datestr, self.tlhop_epss_report_fp)
         return sampled_df
 
-    # def get_report_each(
-    #     self,
-    #     day,
-    #     user_id=None,
-    #     columns=None,
-    #     condition=None,
-    #     single_output=False,
-    #     start=0,
-    #     finish=-1,
-    #     sort_by="score",
-    #     ascending=False,
-    # ):
-    #     """
-    #     Fetch 120 entries for each user from pre-sampled data.
-    #     If the data is not yet sampled for the current day, it will sample it first.
-    #     """
-    #     if self.sampled_data is None:
-    #         self.sample_data(day, 777, 600)
-
-    #     if self.sampled_data is not None:
-    #         print(f"Using pre-sampled data for day {day} for user {user_id}")
-    #         df = self.sampled_data.copy()
-
-    #         if single_output:
-    #             df_filtered = df.query(condition) if condition else df
-    #             df = df_filtered.head(1).to_dict(orient="records")
-    #         else:
-    #             if condition:
-    #                 df = df.query(condition)
-
-    #             # df = df.sort_values(by=sort_by, ascending=ascending)
-
-    #             num_users = 6
-    #             entries_per_user = 120
-
-    #             user_index = user_id % num_users
-    #             start_index = user_index * entries_per_user
-    #             end_index = start_index + entries_per_user
-
-    #             df = df.iloc[start_index:end_index]
-
-    #             if finish > 0:
-    #                 df = df.iloc[start:finish]
-    #     else:
-    #         df = pd.DataFrame()
-
-    #     return df
-
-    # def get_total_entries_new(self, day, condition=None):
-    #     commit = self.retrive_commit(day)
-    #     total_entries = 0
-    #     if commit >= 0:
-    #         filepath = self.tlhop_epss_report_path
-    #         dt = DeltaTable(filepath, version=commit).to_pyarrow_dataset()
-    #         if condition:
-    #             total_entries = dt.filter(condition).count_rows()
-    #         else:
-    #             total_entries = dt.count_rows()
-    #     return total_entries
-
-    # def remove_old_data(self):
-    #     # default of 1 week
-    #     filepaths = [self.tlhop_epss_report_path] + [
-    #         self.tlhop_epss_views_path.format(code + 1) for code in range(self.n_views)
-    #     ]
-
-    #     for filepath in filepaths:
-    #         filepath = filepath.replace("//", "/")
-    #         print(
-    #             f"[INFO][DatasetManager][remove_old_data] - checking file {filepath}",
-    #             flush=True,
-    #         )
-    #         try:
-    #             dt = DeltaTable(filepath)
-    #             dt.vacuum(
-    #                 retention_hours=RETENTION_VACUUM_HOURS,
-    #                 dry_run=False,
-    #                 enforce_retention_duration=False,
-    #             )
-    #         except:
-    #             print(
-    #                 f"[ERROR][DatasetManager][remove_old_data] - error to vacuum file '{filepath}'",
-    #                 flush=True,
-    #             )
-
-    # def waiting_next_file(self, mode="latest"):
-    #     next_date = self.last_dump_date().replace("-", "")
-
-    #     filepath = SHODAN_FOLDER + "/BR.{pattern}.json.bz2"
-    #     available_dates = [
-    #         os.path.basename(s)[3:-9]
-    #         for s in sorted(glob.glob(filepath.format(pattern="*")))
-    #     ]
-
-    #     found_files = [
-    #         day[0:4] + "-" + day[4:6] + "-" + day[6:8]
-    #         for day in available_dates
-    #         if next_date < day
-    #     ]
-    #     if len(found_files) > 0:
-    #         if mode == "all":
-    #             print(
-    #                 "[INFO][waiting_next_file] Found a new Shodan dump for day: ",
-    #                 found_files,
-    #                 flush=True,
-    #             )
-    #             return found_files
-    #         elif mode == "latest":
-    #             print(
-    #                 "[INFO][waiting_next_file] Found a new Shodan dump for day: ",
-    #                 found_files[-1],
-    #                 flush=True,
-    #             )
-    #             return [found_files[-1]]
-
-    #     return None
-
-    # def compute_next_dump(self, last_date_commit):
-    #     if last_date_commit:
-    #         scheduler = croniter(CRON_EXPRESSION, last_date_commit)
-    #         next_run = scheduler.get_next(datetime)
-    #     else:
-    #         next_run = datetime.now()
-    #     return next_run
-
     def join_votes_shodan_df(self, df: DataFrame, datestr: str):
         assert time.strptime(datestr, "%Y-%m-%d")
-        # version = self.datestr2version[datestr]
-        # day_df = DeltaTable(self.tlhop_epss_report_fp, version=version).to_pandas()
         day_df = self.datestr2df[datestr].copy()
         day_df.set_index("meta_id", inplace=True)
 
@@ -449,7 +235,7 @@ class DatasetManager:
 
         warnings.filterwarnings("ignore", category=pandas.errors.PerformanceWarning)
 
-        # Try join from most specific to least specific
+        # First we should try to join by the _shodan.id field and then join from most specific to least specific
         for index in [["ip_str", "port", "orgname"], ["ip_str", "orgname"], ["orgname"]]:
             org_df = self.org_df.copy()
             org_df.set_index(index, inplace=True)
@@ -498,9 +284,12 @@ class DatasetManager:
 
         def max_epss_cve_id(vulns):
             return max(vulns, key=lambda x: x["epss"])["cve_id"]
+        
+        def isin_kev(vulns) -> DataFrame:
+            return any(vuln["cve_id"] in self.kev_set for vuln in vulns)
 
         features_df["max_epss_cve_id"] = df["vulns"].apply(max_epss_cve_id)
-        features_df["in_kev"] = features_df["max_epss_cve_id"].isin(self.kev_df["cveID"])
+        features_df["in_kev"] = df["vulns"].apply(isin_kev)
         self.join_cve_features(features_df)
 
         def summarize_vulns(row):
