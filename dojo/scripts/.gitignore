@@ -1,0 +1,4 @@
+__pycache__/
+lib/settings.py
+lib/__pycache__/
+data/outputs/user_credentials.txt
