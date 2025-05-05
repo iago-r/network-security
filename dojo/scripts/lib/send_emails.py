@@ -5,6 +5,9 @@ import time
 
 from .settings import SENDER, SMTP_PASS, SMTP_PORT, SMTP_SERVER, SMTP_USER, USERS_FILE
 
+
+# cunha: convert to template-strings when we migrate to Python 3.14
+# https://peps.python.org/pep-0750/
 EMAIL_TEMPLATE = """\
 Olá, {name}!
 
@@ -30,7 +33,7 @@ Selecionamos um conjunto de 30 vulnerabilidades de diferentes tipos para você a
 
 Após a realização dos experimentos iremos compartilhar um formulário de feedback e enviaremos um relatório comparando suas análises com as realizadas pelos outros participantes do programa Hackers do Bem.
 
-Seja muito bem-vindo(a)! 
+Seja muito bem-vindo(a)!
 Equipe GT Crivo
 """
 
@@ -64,4 +67,3 @@ def send_emails():
                     time.sleep(10)
         except Exception as e:
             print(f"Error: {e}")
-        
